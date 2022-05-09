@@ -1,7 +1,7 @@
 ## Script para cuadrar los nombres de los genes, la info y las regiones de cada cromosoma
 # en las 3 versiones de las anotaciones del genoma de TRIGO BLANDO.
 
-## A partir del output del script "script Julian equivalencias detallado" -> equivalencias y funciones (ya esta hecha la correspondencia entre genes y funciones de las 3 versiones)
+## A partir del output del script "script Julian equivalencias detallado" -> "equivalencias y funciones" (ya esta hecha la correspondencia entre genes y funciones de las 3 versiones)
 
 #cargar librerias necesarias
 library(readr)
