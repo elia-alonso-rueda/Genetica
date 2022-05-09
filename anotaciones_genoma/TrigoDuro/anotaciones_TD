@@ -1,0 +1,128 @@
+################################
+########## TRIGO DURO ########## 
+################################
+# Script para encontrar genes e informacion sobre ellos en regiones de interes de TRIGO DURO
+# Input necesario: anotacion del genoma de trigo duro (TRITD_HC) y regiones de interés
+
+#Cargar librerias
+library(readxl)
+library(dplyr)
+library(stringr)
+library(tidyverse)
+library(datos)
+#Poner aqui la ruta del directorio donde esta el archivo con las regiones de interes y las anotaciones de los genomas
+setwd("C:/Users/Elia/Desktop/genetica/anotaciones/TD")
+
+##Cargar archivos
+#Input del user - regiones sobre las que queremos extraer informacion
+INPUT <- read_excel("MTAs.xlsx")
+INPUT <- select(INPUT, c(1,2,3,4))
+names(INPUT) <- c("Chr", "Name", "Start", "End" )
+#Cargar y limpiar la anotacion genoma trigo duro
+TRITD <- read.delim("TRITD_HC.gff3", header=FALSE)
+#Seleccionar las columnas que van a hacer falta 
+TRITD <- select(TRITD, c(1,3,4,5,9))
+#Nombres de las columnas en TRITD
+names(TRITD) <- c("Chr", "type", "Start", "End", "Info")
+#Seleccionar solo las filas de mRNA y gene
+TRITD <- TRITD[!(TRITD$type == "CDS"),]
+
+#Funcion para definir el comienzo y el final de la region genomica
+#Input: principio y final de la region de inter?s y el genoma donde va a encontrar la region
+set_limits <- function(start.input, end.input, anotation){
+  # seleccionar la parte del genoma en los que los finales sean mayores que el comienzo de la region de interes
+  subanotation <- anotation[anotation$End >= start.input ,]
+  # de ese subgenoma seleccionamos ahora  la parte en la que los comienzos sean menores que el final de la region de interes
+  subanotation <- subanotation[subanotation$Start <= end.input ,]
+  return(subanotation)
+}
+
+#directorio para almacernar los resultados
+date = as.character(Sys.Date())
+dir.create(paste("results_TD", date))
+setwd(paste0(getwd(), paste("/results_TD", date)))
+
+info_total <- data.frame(Chr = as.character(), Secuencia =as.character(), Region.start = as.character(), Region.end= as.character(), num.genes= as.character(), Info = as.character())
+for (ch in unique(INPUT$Chr)){ # recorrer el input cromosoma a cromosoma
+  #subset del input y del genoma cromosoma por cromosoma
+  INPUT_ch = INPUT[INPUT$Chr == ch ,]
+  TRITD_ch = TRITD[TRITD$Chr == ch ,]
+  #Recorrer el subset del cromosoma para:
+  ## 1. encontrar el principio y el final de cada region genomica donde esta cada secuencia de interes y filtrar cada subgenoma para quedarme solo con esa region
+  ## 2. sacar la informacion 
+  for (i in 1:nrow(INPUT_ch)){
+    subgenome <- set_limits(INPUT_ch$Start[i], INPUT_ch$End[i], TRITD_ch)
+    for (r in 1:nrow(subgenome)){
+      if (subgenome$type[r] == "gene"){
+        inf <- subgenome$Info[r+1]
+        # ir metiendo en el nuevo data set el cromosoma en el que esta, el nombre de la secuencia de interes, el principio y el final de la region genomica, el numero de genes que hay en esa region y la informacion de cada uno de ellos
+        new_row <- data.frame(ch, INPUT_ch$Name[i], min(subgenome$Start), max(subgenome$End), nrow(subgenome[subgenome$type == "gene" ,]), inf)
+        names(new_row) <- c("Chr", "Secuencia", "Region.start", "Region.end", "num.genes", "Info")
+        info_total <- rbind(info_total, new_row)
+      }
+    }
+  }
+}
+# exportarlo a un archivo en la carpeta de resultados
+write.table(info_total, file= "total_TD.txt" ,sep="\t")
+
+#limpiar la info para devolver un archivo solo con el ID del gen y el note de cada gen
+info_summary <- info_total
+for (i in 1:nrow(info_summary)){
+  splitted <- str_split(info_summary$Info[i], ";")
+  id <- substr(splitted[[1]][2],8,nchar(splitted[[1]][2]))
+  note <- substr(splitted[[1]][5],6,nchar(splitted[[1]][5]))
+  new_info <- str_c(id, note, sep = ";")
+  info_summary$Info[i] <- new_info
+}
+
+#exportarlo a un archivo llamado summary_TD
+write.table(info_summary, file= "summary_TD.txt" ,sep="\t")
+
+
+#volvemos al working directory de origen
+setwd("C:/Users/Elia/Desktop/genetica/anotacion_trigo_duro")
+
+
+################################
+######### TRIGO BLANDO ######### 
+################################
+setwd("C:/Users/Elia/Desktop/genetica/anotacion_trigo_blando")
+
+# prueba con INPUT de trigo duro - chr1A (3 primeras lineas de MTAs)
+INPUT <- INPUT[1:3 ,]
+
+#cargar el genoma de trigo blando (previamente limpio en el script donde juntaba el gend e la version mas actualizada y la funcion que hay en la primera version)
+TRITB <- read.delim("v2.1_funciones_merged_incompleto.txt")
+#poner el nombre del cromosoma en minuscula
+for (ch in 1:nrow(TRITB)){
+  TRITB$Chr[ch] <- gsub("C", "c", TRITB$Chr[ch])
+}
+
+#crear directorio para almacenar los resultados
+date = as.character(Sys.Date())
+dir.create(paste("results_TB", date))
+setwd(paste0(getwd(), paste("/results_TB", date)))
+
+info_summary <- data.frame(Chr = as.character(), Secuencia =as.character(), Region.start = as.character(), Region.end= as.character(), num.genes= as.character(), Info = as.character())
+for (ch in unique(INPUT$Chr)){ # recorrer el input cromosoma a cromosoma
+  # empezar un archivo por cromosoma para escribir toda la informacion
+  #subset del input y del genoma cromosoma por cromosoma
+  INPUT_ch = INPUT[INPUT$Chr == ch ,]
+  TRITB_ch = TRITB[TRITB$Chr == ch ,]
+  #Recorrer el subset del cromosoma para:
+  ## 1. encontrar el principio y el final de cada region genomica donde esta cada secuencia de interes y filtrar cada subgenoma para quedarme solo con esa region
+  ## 2. sacar la informacion (numero de genes, id y note de cada gen dentro de esa region)
+  for (i in 1:nrow(INPUT_ch)){
+    subgenome <- set_limits(INPUT_ch$Start[i], INPUT_ch$End[i], TRITB_ch)
+    for (r in 1:nrow(subgenome)){
+      new_row <- data.frame(ch, INPUT_ch$Name[i], min(subgenome$Start), max(subgenome$End), n.genes <- nrow(subgenome[subgenome$type == "gene" ,]), subgenome$Info)
+      names(new_row) <- c("Chr", "Secuencia", "Region.start", "Region.end", "num.genes", "Info")
+      info_summary <- rbind(info_summary, new_row)
+    }
+  }
+}
+
+#exportar a un archivo llamado summary_TB
+write.table(info_summary, file= "summary_TB.txt" ,sep="\t")
+
