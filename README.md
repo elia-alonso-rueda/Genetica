@@ -1,0 +1,2 @@
+# Genetica
+scripts definitivos genética
