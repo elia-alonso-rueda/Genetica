@@ -39,8 +39,10 @@ for (i in 1:nrow(TRITD)){
     new_TRITD <- rbind(new_TRITD, TRITD[i+1 ,])
   }
 }
-
+# lo renombro, de manera que ya solo tengo un dataframe con el primer mRNA de cada gen
 TRITD <- new_TRITD
+#elimino la variable new_TRITD para que no me ocupe memoria
+rm(new_TRITD)
 # le voy a quitar la parte de chr porque en este caso, el nombre de los cromosomas que me devuelve TASSEL no tiene la parte de chr
 #y lo pongo en minuscula
 for (ch in 1:nrow(TRITD)){
@@ -98,48 +100,4 @@ write.table(info_summary, file= "summary_TD.txt" ,sep="\t")
 
 #volvemos al working directory de origen
 setwd("C:/Users/Elia/Desktop/genetica/anotacion_trigo_duro")
-
-
-################################
-######### TRIGO BLANDO ######### 
-################################
-setwd("C:/Users/Elia/Desktop/genetica/anotacion_trigo_blando")
-
-# prueba con INPUT de trigo duro - chr1A (3 primeras lineas de MTAs)
-INPUT <- INPUT[1:3 ,]
-
-#cargar el genoma de trigo blando (previamente limpio en el script donde juntaba el gend e la version mas actualizada y la funcion que hay en la primera version)
-TRITB <- read.delim("v2.1_funciones_merged_incompleto.txt")
-#poner el nombre del cromosoma en minuscula
-for (ch in 1:nrow(TRITB)){
-  TRITB$Chr[ch] <- gsub("C", "c", TRITB$Chr[ch])
-}
-
-#crear directorio para almacenar los resultados
-date = as.character(Sys.Date())
-dir.create(paste("results_TB", date))
-setwd(paste0(getwd(), paste("/results_TB", date)))
-
-info_summary <- data.frame(Chr = as.character(), Secuencia =as.character(), Region.start = as.character(), Region.end= as.character(), num.genes= as.character(), Info = as.character())
-for (ch in unique(INPUT$Chr)){ # recorrer el input cromosoma a cromosoma
-  # empezar un archivo por cromosoma para escribir toda la informacion
-  #subset del input y del genoma cromosoma por cromosoma
-  INPUT_ch = INPUT[INPUT$Chr == ch ,]
-  TRITB_ch = TRITB[TRITB$Chr == ch ,]
-  #Recorrer el subset del cromosoma para:
-  ## 1. encontrar el principio y el final de cada region genomica donde esta cada secuencia de interes y filtrar cada subgenoma para quedarme solo con esa region
-  ## 2. sacar la informacion (numero de genes, id y note de cada gen dentro de esa region)
-  for (i in 1:nrow(INPUT_ch)){
-    subgenome <- set_limits(INPUT_ch$Start[i], INPUT_ch$End[i], TRITB_ch)
-    for (r in 1:nrow(subgenome)){
-      new_row <- data.frame(ch, INPUT_ch$Name[i], min(subgenome$Start), max(subgenome$End), n.genes <- nrow(subgenome[subgenome$type == "gene" ,]), subgenome$Info)
-      names(new_row) <- c("Chr", "Secuencia", "Region.start", "Region.end", "num.genes", "Info")
-      info_summary <- rbind(info_summary, new_row)
-    }
-  }
-}
-
-#exportar a un archivo llamado summary_TB
-write.table(info_summary, file= "summary_TB.txt" ,sep="\t")
-
 
