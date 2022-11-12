@@ -1,1 +1,1 @@
-
+Con anotaciones.TB podemos, a partir de una tabla que contenga regiones de interés, obtener el número de genes que hay en ellas y sus anotaciones. Muy importante que en esa carpeta esté el archivo v2.1_funciones_merged, ya que es el que contiene la información de la anotación de todo el genoma de trigo blando. Lo he subido en un zip porque es un archivo muy grande y github no lo aceptaba sin comprimir.
