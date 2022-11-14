@@ -1,6 +1,6 @@
 script para buscar polimorfismos entre marcadores
 
-*input*: el df de entrada debe tener como columnas, por un lado una con IDs de los individuos y luego tantas columnas como marcadores se vayan a analizar. Meto en esta carpeta un archivo que yo utilicé de input con este script como ejemplo.
+*input*: el df de entrada debe tener como columnas, por un lado una con IDs de los individuos y luego tantas columnas como marcadores se vayan a analizar. Meto en esta carpeta un archivo que yo utilicé de input con este script como ejemplo (SNPs_limpio).
 
 *USO DEL SCRIPT*:
 Para comprobar polimorfismos, se tienen que poner en list1 y list2 los nombres de los marcadores tal cual y como aparecen en las columnas, si no, no funcionará - recomiendo ponerlos como los índices de las columnas dentro del comando name, tal y como aparece en este script.
